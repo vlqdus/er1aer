@@ -1,0 +1,176 @@
+
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=VT323&display=swap');
+  *{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --green:#39ff14;--amber:#ffb300;--dim:#1a2a1a;--panel:#0d1a0d;
+    --border:#2a4a2a;--text:#c8e6c9;--muted:#6a9a6a;
+  }
+  body{background:var(--panel);color:var(--text);font-family:'Share Tech Mono',monospace;padding:0}
+  .scanline{
+    pointer-events:none;position:fixed;top:0;left:0;width:100%;height:100%;
+    background:repeating-linear-gradient(0deg,rgba(0,0,0,0.08) 0px,rgba(0,0,0,0.08) 1px,transparent 1px,transparent 2px);
+    z-index:1000;
+  }
+  .wrap{max-width:860px;margin:0 auto;padding:1.5rem 1rem}
+  .header{border:1px solid var(--green);padding:1.5rem;margin-bottom:1.5rem;position:relative;text-align:center}
+  .header::before{content:'';position:absolute;top:4px;left:4px;right:4px;bottom:4px;border:1px solid rgba(57,255,20,0.2)}
+  .callsign{font-family:'VT323',monospace;font-size:4.5rem;color:var(--green);letter-spacing:0.1em;line-height:1;text-shadow:0 0 20px rgba(57,255,20,0.4)}
+  .operator{font-size:1rem;color:var(--amber);margin-top:0.4rem;letter-spacing:0.2em}
+  .locator{font-size:0.8rem;color:var(--muted);margin-top:0.3rem}
+  .status-bar{display:flex;gap:1rem;flex-wrap:wrap;margin-bottom:1.5rem}
+  .status-item{flex:1;min-width:160px;border:1px solid var(--border);padding:0.75rem;position:relative}
+  .status-label{font-size:0.7rem;color:var(--muted);letter-spacing:0.15em;margin-bottom:0.3rem}
+  .status-val{font-size:1.1rem;color:var(--green)}
+  .led{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green);animation:blink 2s infinite;margin-right:6px}
+  @keyframes blink{0%,100%{opacity:1}50%{opacity:0.3}}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.5rem}
+  @media(max-width:580px){.grid2{grid-template-columns:1fr}}
+  .panel{border:1px solid var(--border);padding:1rem}
+  .panel-title{font-size:0.7rem;color:var(--amber);letter-spacing:0.2em;border-bottom:1px solid var(--border);padding-bottom:0.5rem;margin-bottom:0.75rem}
+  .bio-text{font-size:0.85rem;line-height:1.7;color:var(--text)}
+  .gear-row{display:flex;align-items:baseline;gap:0.5rem;padding:0.3rem 0;border-bottom:1px solid var(--border);font-size:0.82rem}
+  .gear-row:last-child{border-bottom:none}
+  .gear-key{color:var(--muted);min-width:90px;font-size:0.72rem;letter-spacing:0.1em}
+  .gear-val{color:var(--text)}
+  .modes-row{display:flex;gap:0.5rem;flex-wrap:wrap;margin-top:0.5rem}
+  .badge{font-size:0.72rem;border:1px solid var(--green);color:var(--green);padding:2px 8px;letter-spacing:0.1em}
+  .badge.amber{border-color:var(--amber);color:var(--amber)}
+  .sstv-box{margin-bottom:1.5rem}
+  .sstv-placeholder{border:1px dashed var(--border);height:160px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0.5rem;color:var(--muted);font-size:0.8rem}
+  .sstv-placeholder .icon{font-size:2rem;filter:grayscale(1) brightness(0.5)}
+  .rx-log{margin-bottom:1.5rem}
+  .rx-entry{display:grid;grid-template-columns:1fr 1fr 1fr;gap:0.5rem;padding:0.4rem 0;border-bottom:1px solid var(--border);font-size:0.78rem}
+  .rx-entry:last-child{border-bottom:none}
+  .rx-head{color:var(--muted);font-size:0.68rem;letter-spacing:0.1em}
+  .links-row{display:flex;gap:0.75rem;flex-wrap:wrap;margin-bottom:1.5rem}
+  .ext-link{border:1px solid var(--border);padding:0.5rem 1rem;color:var(--amber);text-decoration:none;font-size:0.82rem;letter-spacing:0.1em;transition:border-color 0.2s,color 0.2s}
+  .ext-link:hover{border-color:var(--amber);color:var(--green)}
+  .footer{text-align:center;font-size:0.72rem;color:var(--muted);border-top:1px solid var(--border);padding-top:1rem;letter-spacing:0.1em}
+  .corner{position:absolute;width:8px;height:8px}
+  .c-tl{top:-1px;left:-1px;border-top:2px solid var(--amber);border-left:2px solid var(--amber)}
+  .c-tr{top:-1px;right:-1px;border-top:2px solid var(--amber);border-right:2px solid var(--amber)}
+  .c-bl{bottom:-1px;left:-1px;border-bottom:2px solid var(--amber);border-left:2px solid var(--amber)}
+  .c-br{bottom:-1px;right:-1px;border-bottom:2px solid var(--amber);border-right:2px solid var(--amber)}
+  .ticker{font-size:0.72rem;color:var(--muted);border:1px solid var(--border);padding:0.35rem 0.75rem;margin-bottom:1.5rem;overflow:hidden;white-space:nowrap}
+  .ticker span{display:inline-block;animation:scroll 20s linear infinite}
+  @keyframes scroll{0%{transform:translateX(100%)}100%{transform:translateX(-100%)}}
+</style>
+
+<div class="scanline"></div>
+<div class="wrap">
+
+  <div class="header">
+    <div class="corner c-tl"></div><div class="corner c-tr"></div>
+    <div class="corner c-bl"></div><div class="corner c-br"></div>
+    <div class="callsign">ER1AER</div>
+    <div class="operator">VLAD &mdash; AMATEUR RADIO OPERATOR</div>
+    <div class="locator">KN46QT &bull; MOLDOVA &bull; VHF / UHF</div>
+  </div>
+
+  <div class="ticker"><span>de ER1AER &bull; 73 de Moldova &bull; QRV on VHF/UHF &bull; SSTV enthusiast &bull; listening always &bull; 73!</span></div>
+
+  <div class="status-bar">
+    <div class="status-item">
+      <div class="status-label">STATUS</div>
+      <div class="status-val"><span class="led"></span>QRV</div>
+    </div>
+    <div class="status-item">
+      <div class="status-label">PRIMARY BAND</div>
+      <div class="status-val">144 / 432 MHz</div>
+    </div>
+    <div class="status-item">
+      <div class="status-label">LOCATOR</div>
+      <div class="status-val">KN46QT</div>
+    </div>
+    <div class="status-item">
+      <div class="status-label">DXCC</div>
+      <div class="status-val">ER — Moldova</div>
+    </div>
+  </div>
+
+  <div class="grid2">
+    <div class="panel">
+      <div class="panel-title">// ABOUT</div>
+      <div class="bio-text">
+        Hello and 73! I'm Vlad, a licensed ham radio operator based in Moldova. 
+        My passion is VHF/UHF propagation — chasing tropo ducting, meteor scatter, and whatever the ionosphere decides to throw my way. 
+        I also enjoy decoding and sending SSTV images and logging interesting RX catches.<br><br>
+        Always happy to make a contact — feel free to reach out via QRZ or eQSL.
+      </div>
+      <div class="modes-row" style="margin-top:0.75rem">
+        <span class="badge">FM</span>
+        <span class="badge">SSB</span>
+        <span class="badge">SSTV</span>
+        <span class="badge amber">TROPO</span>
+        <span class="badge amber">MS</span>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">// RIG & GEAR</div>
+      <div class="gear-row"><span class="gear-key">TRANSCEIVER</span><span class="gear-val">[ your rig here ]</span></div>
+      <div class="gear-row"><span class="gear-key">ANTENNA 2m</span><span class="gear-val">[ your antenna ]</span></div>
+      <div class="gear-row"><span class="gear-key">ANTENNA 70cm</span><span class="gear-val">[ your antenna ]</span></div>
+      <div class="gear-row"><span class="gear-key">POWER</span><span class="gear-val">[ watts ]</span></div>
+      <div class="gear-row"><span class="gear-key">INTERFACE</span><span class="gear-val">[ sound card / SDR ]</span></div>
+      <div class="gear-row"><span class="gear-key">SOFTWARE</span><span class="gear-val">MMSSTV / WSJT-X</span></div>
+    </div>
+  </div>
+
+  <div class="panel sstv-box">
+    <div class="panel-title">// SSTV — RECENT RECEIVED IMAGES</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:0.75rem">
+      <div class="sstv-placeholder">
+        <div class="icon">&#x1F4F7;</div>
+        <div>upload your .jpg here</div>
+        <div style="font-size:0.68rem">mode / date / callsign</div>
+      </div>
+      <div class="sstv-placeholder">
+        <div class="icon">&#x1F4F7;</div>
+        <div>upload your .jpg here</div>
+        <div style="font-size:0.68rem">mode / date / callsign</div>
+      </div>
+      <div class="sstv-placeholder">
+        <div class="icon">&#x1F4F7;</div>
+        <div>upload your .jpg here</div>
+        <div style="font-size:0.68rem">mode / date / callsign</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel rx-log">
+    <div class="panel-title">// RX LOG — INTERESTING CATCHES</div>
+    <div class="rx-entry rx-head">
+      <span>DATE UTC</span><span>STATION / SIGNAL</span><span>NOTE</span>
+    </div>
+    <div class="rx-entry">
+      <span style="color:var(--green)">2025-04-10</span><span>[ callsign ]</span><span style="color:var(--muted)">tropo from YO</span>
+    </div>
+    <div class="rx-entry">
+      <span style="color:var(--green)">2025-03-28</span><span>[ callsign ]</span><span style="color:var(--muted)">meteor scatter</span>
+    </div>
+    <div class="rx-entry">
+      <span style="color:var(--green)">2025-03-15</span><span>[ callsign ]</span><span style="color:var(--muted)">SSTV Robot 36</span>
+    </div>
+    <div class="rx-entry" style="color:var(--muted);font-size:0.72rem;justify-content:center;text-align:center">
+      <span style="grid-column:1/-1">— add more entries as you go —</span>
+    </div>
+  </div>
+
+  <div class="panel" style="margin-bottom:1.5rem">
+    <div class="panel-title">// LINKS</div>
+    <div class="links-row">
+      <a class="ext-link" href="https://www.qrz.com/db/ER1AER">QRZ.com</a>
+      <a class="ext-link" href="https://www.eqsl.cc">eQSL</a>
+      <a class="ext-link" href="https://www.qrzcq.com">QRZCQ</a>
+      <a class="ext-link" href="https://aprs.fi">APRS.fi</a>
+      <a class="ext-link" href="https://tropo.hfdl.net">Tropo</a>
+    </div>
+  </div>
+
+  <div class="footer">
+    de ER1AER &bull; Vlad &bull; Moldova &bull; KN46QT &nbsp;|&nbsp; 73 &amp; GL DX
+  </div>
+
+</div>

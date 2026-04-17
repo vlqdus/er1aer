@@ -1,14 +1,273 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TestPage</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ER1AER — Vlad, Ham Radio Operator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=VT323&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --green:#39ff14;--amber:#ffb300;--panel:#0d1a0d;
+    --border:#2a4a2a;--text:#c8e6c9;--muted:#6a9a6a;--dim:#1a2a1a;
+  }
+  html{scroll-behavior:smooth}
+  body{
+    background:var(--panel);color:var(--text);
+    font-family:'Share Tech Mono',monospace;
+    min-height:100vh;overflow-x:hidden;
+  }
+  .scanline{
+    pointer-events:none;position:fixed;top:0;left:0;width:100%;height:100%;
+    background:repeating-linear-gradient(0deg,rgba(0,0,0,0.07) 0px,rgba(0,0,0,0.07) 1px,transparent 1px,transparent 2px);
+    z-index:9999;
+  }
+
+  /* LANGUAGE TOGGLE */
+  .lang-btn{
+    position:fixed;top:16px;right:16px;z-index:10000;
+    background:#0d1a0d;border:2px solid var(--green);
+    color:var(--green);font-family:'Share Tech Mono',monospace;
+    font-size:0.85rem;letter-spacing:0.15em;padding:8px 14px;
+    cursor:pointer;transition:all 0.2s;
+    box-shadow:0 0 12px rgba(57,255,20,0.3);
+  }
+  .lang-btn:hover{background:var(--green);color:#0d1a0d;box-shadow:0 0 20px rgba(57,255,20,0.6)}
+
+  .wrap{max-width:880px;margin:0 auto;padding:1.5rem 1rem 3rem}
+
+  /* HEADER */
+  .header{
+    border:1px solid var(--green);padding:2rem 1.5rem;
+    margin-bottom:1.5rem;position:relative;text-align:center;
+    margin-top:0.5rem;
+  }
+  .header::before{content:'';position:absolute;top:5px;left:5px;right:5px;bottom:5px;border:1px solid rgba(57,255,20,0.18)}
+  .callsign{
+    font-family:'VT323',monospace;font-size:clamp(3rem,10vw,5rem);
+    color:var(--green);letter-spacing:0.1em;line-height:1;
+    text-shadow:0 0 24px rgba(57,255,20,0.5);
+  }
+  .operator{font-size:clamp(0.8rem,2.5vw,1rem);color:var(--amber);margin-top:0.4rem;letter-spacing:0.2em}
+  .locator{font-size:0.78rem;color:var(--muted);margin-top:0.3rem;letter-spacing:0.1em}
+  .corner{position:absolute;width:10px;height:10px}
+  .c-tl{top:-1px;left:-1px;border-top:2px solid var(--amber);border-left:2px solid var(--amber)}
+  .c-tr{top:-1px;right:-1px;border-top:2px solid var(--amber);border-right:2px solid var(--amber)}
+  .c-bl{bottom:-1px;left:-1px;border-bottom:2px solid var(--amber);border-left:2px solid var(--amber)}
+  .c-br{bottom:-1px;right:-1px;border-bottom:2px solid var(--amber);border-right:2px solid var(--amber)}
+
+  /* TICKER */
+  .ticker{
+    font-size:0.72rem;color:var(--muted);border:1px solid var(--border);
+    padding:0.35rem 0;margin-bottom:1.5rem;overflow:hidden;white-space:nowrap;
+  }
+  .ticker-inner{display:inline-block;animation:scroll 28s linear infinite}
+  @keyframes scroll{0%{transform:translateX(100vw)}100%{transform:translateX(-100%)}}
+
+  /* STATUS BAR */
+  .status-bar{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:0.75rem;margin-bottom:1.5rem}
+  .status-item{border:1px solid var(--border);padding:0.65rem 0.85rem}
+  .status-label{font-size:0.65rem;color:var(--muted);letter-spacing:0.15em;margin-bottom:0.25rem}
+  .status-val{font-size:1rem;color:var(--green)}
+  .led{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green);animation:blink 2s infinite;margin-right:6px}
+  @keyframes blink{0%,100%{opacity:1}50%{opacity:0.3}}
+
+  /* GRID */
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem}
+  @media(max-width:600px){.grid2{grid-template-columns:1fr}}
+
+  /* PANELS */
+  .panel{border:1px solid var(--border);padding:1rem;margin-bottom:1rem}
+  .panel-title{font-size:0.68rem;color:var(--amber);letter-spacing:0.2em;border-bottom:1px solid var(--border);padding-bottom:0.5rem;margin-bottom:0.75rem}
+  .bio-text{font-size:0.83rem;line-height:1.75;color:var(--text)}
+  .gear-row{display:flex;gap:0.5rem;padding:0.3rem 0;border-bottom:1px solid var(--border);font-size:0.8rem;flex-wrap:wrap}
+  .gear-row:last-child{border-bottom:none}
+  .gear-key{color:var(--muted);min-width:100px;font-size:0.7rem;letter-spacing:0.08em;flex-shrink:0}
+  .gear-val{color:var(--text)}
+  .modes-row{display:flex;gap:0.5rem;flex-wrap:wrap;margin-top:0.75rem}
+  .badge{font-size:0.7rem;border:1px solid var(--green);color:var(--green);padding:2px 8px;letter-spacing:0.1em}
+  .badge.amber{border-color:var(--amber);color:var(--amber)}
+
+  /* SSTV */
+  .sstv-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:0.75rem}
+  .sstv-placeholder{
+    border:1px dashed var(--border);min-height:150px;
+    display:flex;flex-direction:column;align-items:center;
+    justify-content:center;gap:0.4rem;color:var(--muted);font-size:0.75rem;
+    padding:1rem;text-align:center;
+  }
+  .sstv-placeholder img{width:100%;height:140px;object-fit:cover;border:1px solid var(--border)}
+
+  /* RX LOG */
+  .rx-table{width:100%;border-collapse:collapse;font-size:0.78rem}
+  .rx-table th{color:var(--muted);font-size:0.65rem;letter-spacing:0.12em;text-align:left;padding:0.3rem 0.5rem;border-bottom:1px solid var(--border)}
+  .rx-table td{padding:0.35rem 0.5rem;border-bottom:1px solid rgba(42,74,42,0.5);color:var(--text)}
+  .rx-table td:first-child{color:var(--green)}
+  @media(max-width:480px){
+    .rx-table .hide-mobile{display:none}
+    .rx-table td,.rx-table th{padding:0.3rem 0.25rem;font-size:0.72rem}
+  }
+
+  /* LINKS */
+  .links-row{display:flex;gap:0.75rem;flex-wrap:wrap}
+  .ext-link{
+    border:1px solid var(--border);padding:0.5rem 1rem;
+    color:var(--amber);text-decoration:none;font-size:0.8rem;
+    letter-spacing:0.1em;transition:all 0.2s;display:inline-block;
+  }
+  .ext-link:hover{border-color:var(--amber);color:var(--green);background:rgba(57,255,20,0.05)}
+
+  /* FOOTER */
+  .footer{text-align:center;font-size:0.7rem;color:var(--muted);border-top:1px solid var(--border);padding-top:1rem;letter-spacing:0.1em;margin-top:1rem}
+
+  /* RESPONSIVE FIXES */
+  @media(max-width:400px){
+    .lang-btn{font-size:0.72rem;padding:6px 10px;top:10px;right:10px}
+    .wrap{padding:1rem 0.75rem 2rem}
+  }
+</style>
 </head>
 <body>
-   <center>
-<h1>Test Page</h1>
-    <p>This is a test page for checking the functionality of the web server.</p>
-   </center> 
+<div class="scanline"></div>
+<button class="lang-btn" id="langBtn" onclick="toggleLang()">RO</button>
+
+<div class="wrap">
+
+  <div class="header">
+    <div class="corner c-tl"></div><div class="corner c-tr"></div>
+    <div class="corner c-bl"></div><div class="corner c-br"></div>
+    <div class="callsign">ER1AER</div>
+    <div class="operator">VLAD &mdash; <span data-en="AMATEUR RADIO OPERATOR" data-ro="RADIOAMATOR">AMATEUR RADIO OPERATOR</span></div>
+    <div class="locator">KN47ja &bull; MOLDOVA &bull; VHF / UHF</div>
+  </div>
+
+  <div class="ticker">
+    <span class="ticker-inner" id="tickerText">de ER1AER &bull; 73 de Moldova &bull; QRV on VHF/UHF &bull; SSTV enthusiast &bull; always listening :p &bull; 73 &amp; good DX!</span>
+  </div>
+
+  <div class="status-bar">
+    <div class="status-item">
+      <div class="status-label" data-en="STATUS" data-ro="STATUS">STATUS</div>
+      <div class="status-val"><span class="led"></span>QRV</div>
+    </div>
+    <div class="status-item">
+      <div class="status-label" data-en="PRIMARY BAND" data-ro="BANDĂ PRINCIPALĂ">PRIMARY BAND</div>
+      <div class="status-val">144 / 432 MHz</div>
+    </div>
+    <div class="status-item">
+      <div class="status-label">LOCATOR</div>
+      <div class="status-val">KN47ja</div>
+    </div>
+    <div class="status-item">
+      <div class="status-label">DXCC</div>
+      <div class="status-val">ER — Moldova</div>
+    </div>
+  </div>
+
+  <div class="grid2">
+    <div class="panel">
+      <div class="panel-title" data-en="// ABOUT" data-ro="// DESPRE">// ABOUT</div>
+      <div class="bio-text" data-en="Hello! I’m Vlad, a radio amateur with the callsign ER1AER, passionate about communications, DIY antennas, and RF experiments. I am active mainly on VHF/UHF, local repeaters, but also on 10m when time allows. I enjoy testing equipment, building homemade antennas, and making contacts with stations around the world." data-ro="Salut! Sunt Vlad, radioamator cu indicativul ER1AER, pasionat de comunicații, antene DIY și experimente RF. Activez în principal pe VHF/UHF, repeatoarele locale, dar și pe 10m atunci când timpul îmi permite. Îmi place să testez echipamente, să construiesc antene homemade și să fac legături cu stații din întreaga lume.">
+        Hello! I’m Vlad, a radio amateur with the callsign ER1AER, passionate about communications, DIY antennas, and RF experiments. I am active mainly on VHF/UHF, local repeaters, but also on 10m when time allows. I enjoy testing equipment, building homemade antennas, and making contacts with stations around the world.
+      </div>
+      <div class="modes-row">
+        <span class="badge">FM</span>
+        <span class="badge">SSB</span>
+        <span class="badge amber">SSTV</span>
+        <span class="badge amber">FT8</span>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title" data-en="// RIG & GEAR" data-ro="// ECHIPAMENT">// RIG &amp; GEAR</div>
+      <div class="gear-row"><span class="gear-key">TRANSCEIVER</span><span class="gear-val">UV-5R</span></div>
+      <div class="gear-row"><span class="gear-key">ANTENNA 2m</span><span class="gear-val">2m Yagi</span></div>
+      <div class="gear-row"><span class="gear-key">ANTENNA 70cm</span><span class="gear-val">Nagoya NA-771</span></div>
+      <div class="gear-row"><span class="gear-key" data-en="POWER" data-ro="PUTERE">POWER</span><span class="gear-val">5W</span></div>
+      <div class="gear-row"><span class="gear-key">INTERFACE</span><span class="gear-val">RTL-SDR v4</span></div>
+      <div class="gear-row"><span class="gear-key">SOFTWARE</span><span class="gear-val">MMSSTV / WSJT-X / FLDigi</span></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-title" data-en="// SSTV — RECENT RECEIVED IMAGES" data-ro="// SSTV — IMAGINI RECENTE RECEPȚIONATE">// SSTV — RECENT RECEIVED IMAGES</div>
+    <div class="sstv-grid">
+      <div class="sstv-placeholder">
+        <img src="sstv/sstv1.jpg" alt="Robot 36 - 2026-04-11 - RS0ISS">
+        <div style="font-size:0.65rem;margin-top:0.2rem" data-en="Robot 36 / 11-04-2026 / RS0ISS" data-ro="Robot 36 / 11-04-2026 / RS0ISS">Robot 36 / 11-04-2026 / RS0ISS</div>
+      </div>
+      <div class="sstv-placeholder">
+        <img src="sstv/sstv2.png" alt="Robot 36 - 2026-04-11 - RS0ISS">
+        <div style="font-size:0.65rem;margin-top:0.2rem" data-en="Robot 36 / 11-04-2026 / RS0ISS" data-ro="Robot 36 / 11-04-2026 / RS0ISS">Robot 36 / 11-04-2026 / RS0ISS</div>
+      </div>
+      <div class="sstv-placeholder">
+        <img src="sstv/sstv3.png" alt="Robot 36 - 2026-04-11 - RS0ISS">
+        <div style="font-size:0.65rem;margin-top:0.2rem" data-en="Robot 36 / 12-04-2026 / RS0ISS" data-ro="Robot 36 / 12-04-2026 / RS0ISS">Robot 36 / 12-04-2026 / RS0ISS</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-title" data-en="// RX LOG — INTERESTING CATCHES" data-ro="// JURNAL RX — RECEPȚII INTERESANTE">// RX LOG — INTERESTING CATCHES</div>
+    <table class="rx-table">
+      <thead>
+        <tr>
+          <th data-en="DATE UTC" data-ro="DATĂ UTC">DATE UTC</th>
+          <th data-en="STATION" data-ro="STAȚIE">STATION</th>
+          <th class="hide-mobile" data-en="BAND" data-ro="BANDĂ">BAND</th>
+          <th data-en="NOTE" data-ro="NOTĂ">NOTE</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>2026-04-11</td><td>xxxxx</td>
+          <td class="hide-mobile">145.800 MHz</td>
+          <td style="color:var(--muted)" data-en="ISS Downlink, Russian HAM" data-ro="Downlink ISS, HAM rus">ISS Downlink, Russian HAM</td>
+        </tr>
+        <tr>
+          <td>2025-03-15</td><td>ER1AER</td>
+          <td class="hide-mobile">432.500 MHz</td>
+          <td style="color:var(--muted)" data-en="Local SSTV Contest (Robot 36)" data-ro="Local SSTV Contest (Robot 36)">Local SSTV Contest (Robot 36)</td> 
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="panel">
+    <div class="panel-title">// LINKS</div>
+    <div class="links-row">
+      <a class="ext-link" href="https://www.qrz.com/db/ER1AER" target="_blank">QRZ.com</a>
+      <a class="ext-link" href="https://pskreporter.info/pskmap.html#preset&callsign=ER1AER&timerange=86400&mapCenter=45.6939,20.9223,4.21" target="_blank">PSKReporter</a>
+      <a class="ext-link" href="https://discord.com/invite/NZ5p7NDhYV" target="_blank">Discord Server</a>
+
+    </div>
+  </div>
+
+  <div class="footer">
+    de ER1AER &bull; Vlad &bull; Moldova &bull; KN46QT &nbsp;|&nbsp; 73 &amp; GL DX
+  </div>
+
+</div>
+
+<script>
+  var lang = 'en';
+  function toggleLang(){
+    lang = lang === 'en' ? 'ro' : 'en';
+    document.getElementById('langBtn').textContent = lang === 'en' ? 'RO' : 'EN';
+    document.documentElement.lang = lang;
+
+    document.querySelectorAll('[data-en]').forEach(function(el){
+      var val = el.getAttribute('data-' + lang);
+      if(val) el.textContent = val;
+    });
+
+    var tickers = {
+      en: 'de ER1AER \u2022 73 de Moldova \u2022 QRV on VHF/UHF \u2022 SSTV enthusiast \u2022 always listening \u2022 73 & have a good DX!',
+      ro: 'de ER1AER \u2022 73 din Moldova \u2022 QRV pe VHF/UHF \u2022 pasionat SSTV \u2022 mereu la recepție \u2022 73 & DX bun!'
+    };
+    document.getElementById('tickerText').textContent = tickers[lang];
+  }
+</script>
 </body>
 </html>
